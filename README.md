@@ -3,14 +3,14 @@
 
 # Role-based authorization
 
-Middleware for the [Slim 3](http://www.slimframework.com/) framework.
+Middleware for the [Slim 4](http://www.slimframework.com/) framework.
 
 ## Installation
 
 With Composer:
 
 ```
-composer require tkhamez/slim-role-auth
+composer require tkhamez/slim-role-auth:dev-slim4
 ```
 
 ## Usage
@@ -18,10 +18,11 @@ composer require tkhamez/slim-role-auth
 Example:
 
 ```php
-$app = new Slim\App();
+$app = AppFactory::create();
 
 // Deny access if a required role is missing
 $app->add(new SecureRouteMiddleware(
+    new \Slim\Psr7\Factory\ResponseFactory(), // or another implementation of Psr\Http\Message\ResponseFactoryInterface
     [
         // route pattern -> roles, first "starts-with" match is used
         '/secured/public' => ['any'],
@@ -35,6 +36,10 @@ $app->add(new RoleMiddleware(
     new RoleProvider(), // must implement RoleProviderInterface
     ['route_pattern' => ['/secured']] // optionally limit to these routes
 ));
+
+// Add routing middleware last, so the `route` attribute from `$request` is available
+// (this replaces the determineRouteBeforeAppMiddleware setting from Slim 3).
+$app->add(new \Slim\Middleware\RoutingMiddleware($app->getRouteResolver()));
 ```
 
 - The `SecureRouteMiddleware` denies access to a route if the required role is missing in the `roles` 
@@ -42,7 +47,5 @@ $app->add(new RoleMiddleware(
 - The `RoleMiddleware` class adds the `roles` attribute to the request object with roles provided by the 
   `RoleProvider` class.
 - You can add several role providers for different paths.
-
-This needs the Slim setting `determineRouteBeforeAppMiddleware` set to true.
 
 For more information, see the inline documentation for the classes.
